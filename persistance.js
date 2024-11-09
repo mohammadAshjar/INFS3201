@@ -3,6 +3,10 @@ const mongodb = require("mongodb")
 let client = undefined 
 let db = undefined
 
+/**
+ * Connects to the MongoDB database.
+ * @function
+ */
 async function connectDatabase() {
     if (!client) {
         client = new mongodb.MongoClient('mongodb+srv://60106321:12class34@cluster0.fq90i.mongodb.net/')
@@ -11,6 +15,12 @@ async function connectDatabase() {
     }
 }
 
+
+/**
+ * Retrieves user details by username.
+ * @param {string} uname - The username of the user.
+ * @returns {<Object>} The user details.
+ */
 async function getUserDetail(uname) {
     await connectDatabase()
     let users = db.collection('Users')
@@ -19,14 +29,23 @@ async function getUserDetail(uname) {
 }
     
 
-
+/**
+ * Gets all users.
+ * @returns {<Array>} List of all users.
+ */
 async function getAllUsers() {
     await connectDatabase()
     let users = db.collection('Users')
-    let result = await users.find().toArray()
+    let result =await users.find().toArray()
     return result
 }
 
+
+/**
+ * Retrieves user details by username.
+ * @param {string} username - The username of the user.
+ * @returns {<Object>} The user details.
+ */
 async function getUserDetails(username) {
     await connectDatabase()
     let users = db.collection('Users')
@@ -34,6 +53,11 @@ async function getUserDetails(username) {
     return result
 }
 
+
+/**
+ * Starts a session.
+ * @param {Object} sd - Session data.
+ */
 async function startSession(sd) {
     await connectDatabase()
     let session = db.collection('Session')
@@ -41,12 +65,23 @@ async function startSession(sd) {
 }
 
 
+/**
+ * Updates a session.
+ * @param {string} key - Session key.
+ * @param {Object} data - Data to update.
+ */
 async function updateSession(key, data) {
     await connectDatabase()
     let session = db.collection('Session')
     await session.replaceOne({key: key}, data)
 }
 
+
+/**
+ * Retrieves a session by key.
+ * @param {string} key - Session key.
+ * @returns {<Object>} The session data.
+ */
 async function getSession(key) {
     await connectDatabase()
     let session = db.collection('Session')
@@ -54,18 +89,35 @@ async function getSession(key) {
     return result
 }
 
+
+/**
+ * Terminates a session.
+ * @param {string} key - Session key.
+ */
 async function terminateSession(key) {
     await connectDatabase()
     let session = db.collection('Session')
     await session.deleteOne({key: key})
 }
 
+
+
+/**
+ * Creates a new user account.
+ * @param {Object} data - User data.
+ */
 async function createNewAccount(data){
     await connectDatabase()
     let user = db.collection("Users")
     await user.insertOne(data)
 }
 
+
+/**
+ * Retrieves user details by email.
+ * @param {string} email - The user's email.
+ * @returns {<Object>} The user details.
+ */
 async function getUserDetailByEmail(email) {
     await connectDatabase()
     let user = db.collection("Users")
@@ -73,6 +125,13 @@ async function getUserDetailByEmail(email) {
     return result 
 }
 
+
+/**
+ * Updates user reset details.
+ * @param {string} username - The username of the user.
+ * @param {string} reset - Reset code.
+ * @returns {<Object>} The update result.
+ */
 async function updateUserDetails(username,reset) {
     await connectDatabase()
     let users = db.collection('Users')
@@ -80,6 +139,12 @@ async function updateUserDetails(username,reset) {
     return result
 }
 
+
+/**
+ * Finds a user by reset code.
+ * @param {string} resetCode - The reset code.
+ * @returns {<Object>} The user details.
+ */
 async function findUserByReset(resetCode) {
     await connectDatabase()
     let users = db.collection('Users')
@@ -88,12 +153,23 @@ async function findUserByReset(resetCode) {
     
 }
 
+
+/**
+ * Resets a user's password.
+ * @param {string} user - The username.
+ * @param {string} pwd - The new password.
+ */
 async function resetPassword(user,pwd){
     await connectDatabase()
     let users = db.collection('Users')
     await users.updateOne({username:user},{$set:{password:pwd}})
 }
 
+
+/**
+ * Deletes a reset code for a user.
+ * @param {string} resetCode - The reset code.
+ */
 async function deleteResetCode(resetCode) {
     await connectDatabase()
     let users = db.collection("Users")
