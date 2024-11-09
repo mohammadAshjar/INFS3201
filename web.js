@@ -102,7 +102,8 @@ app.post('/', async (req, res) => {
 app.get('/index',async(req,res)=>{
     let sd = await business.getSession(req.cookies.session)
     if(!sd){
-        res.redirect('/')
+        res.redirect('/?message=Please Log-in')
+        return
     }
     let username = sd.data.username
     if(sd.data.type==="Admin"){
