@@ -13,6 +13,12 @@ let urlencodedParser = bodyParser.urlencoded({extended: false})
 app.use(urlencodedParser)
 app.use(cookieParser())
 
+
+/**
+ * Validates an email address.
+ * @param {string} email - The email address to validate.
+ * @returns {boolean} True if valid, otherwise false.
+ */
 function validateEmail(email){
     if(email.length < 10){
         return false
@@ -29,6 +35,12 @@ function validateEmail(email){
 
 }
 
+
+/**
+ * Validates a password.
+ * @param {string} password - The password to validate.
+ * @returns {boolean} True if valid, otherwise false.
+ */
 function validatePassword(password){
     if(password.length<8){
         return false
@@ -36,6 +48,14 @@ function validatePassword(password){
     return true
 }
 
+
+/**
+ * Renders the login page with an optional message.
+ * @name GET /
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.get('/', async (req,res)=>{
     let message = req.query.message
     res.render('login',{message:message,layout:undefined})
@@ -43,6 +63,14 @@ app.get('/', async (req,res)=>{
     
 )
 
+
+/**
+ * Handles login form submission, validates credentials, and sets a session if successful.
+ * @name POST /
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.post('/', async (req, res) => {
     let username = req.body.uname
     let password = req.body.pw
@@ -63,6 +91,14 @@ app.post('/', async (req, res) => {
     }
 })
 
+
+/**
+ * Renders the index page based on user session type (Admin or User).
+ * @name GET /index
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.get('/index',async(req,res)=>{
     let sd = await business.getSession(req.cookies.session)
     if(!sd){
@@ -77,12 +113,29 @@ app.get('/index',async(req,res)=>{
     }
 })
 
+
+/**
+ * Renders a list of all users.
+ * @name GET /users
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.get('/users', async (req,res)=>{
     let users = await business.getAllUsers()
     res.render('users',{
         data: users
     })
 })
+
+
+/**
+ * Renders the registration page with an optional message.
+ * @name GET /register
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.get('/register',(req,res)=>{
     let message = req.query.message
     res.render('register',{
@@ -91,6 +144,14 @@ app.get('/register',(req,res)=>{
     })
 })
 
+
+/**
+ * Handles new account creation with validation and redirects to login on success.
+ * @name POST /new-account
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.post('/new-account',async (req,res)=>{
     let username = req.body.username
     let email = req.body.email
@@ -113,6 +174,13 @@ app.post('/new-account',async (req,res)=>{
 })
 
 
+/**
+ * Renders the password reset request page with an optional message.
+ * @name GET /reset-password
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.get('/reset-password',async(req,res)=>{
     let message = req.query.message
     res.render('resetpassword',{
@@ -121,6 +189,14 @@ app.get('/reset-password',async(req,res)=>{
     })
 })
 
+
+/**
+ * Handles password reset request, generates reset code, and sends email with reset link.
+ * @name POST /reset-password
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 app.post('/reset-password',async(req,res)=>{
     let email = req.body.email
     let resetUUID = crypto.randomUUID()
