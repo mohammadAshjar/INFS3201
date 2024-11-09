@@ -223,3 +223,116 @@ app.post('/reset-password',async(req,res)=>{
     ` )
     res.redirect('/')
 })
+
+/**
+ * Renders the password reset page for a given reset code.
+ * @name GET /password-reset/:resetCode
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.get('/password-reset/:resetCode',async (req,res)=>{
+    let resetCode = req.params.resetCode
+    if(!resetCode){
+        res.redirect('/')
+        return
+    }
+    let userDetail = await business.findUserByReset(resetCode)
+    if(!userDetail){
+        res.redirect('/')
+        return
+    }
+    res.render('reset',{
+        layout:undefined,
+        code:resetCode
+    }
+    )
+})
+
+/**
+ * Handles password reset form submission, validates, updates password, and deletes reset code.
+ * @name POST /resetpwd
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.post('/resetpwd',async (req,res)=>{
+    let resetCode = req.body.code
+    let userDetail = await business.findUserByReset(resetCode)
+    let password = req.body.password
+    let rePass = req.body.rePassword
+    if(!userDetail){
+        res.redirect('/')
+        return
+    }
+    if(password!==rePass){
+        res.redirect(`/password-reset/${resetCode}?message=password does not match`)
+        return
+    }
+
+    await business.resetPassword(userDetail.username,password)
+    await business.deleteResetCode(resetCode)
+    res.redirect('/?message=Password Changed')
+})
+
+/**
+ * Logs the user out by clearing the session cookie and redirecting to login.
+ * @name GET /logout
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.get('/logout',async(req,res)=>{
+    await business.terminateSession(req.cookies.session)
+    res.clearCookie('session')
+    res.redirect('/')
+})
+
+/**
+ * Renders the user's account page.
+ * @name GET /my-account
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.get('/my-account',async(req,res)=>{
+    res.render('myaccount')
+})
+
+/**
+ * Renders a page not found page.
+ * @name USE
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.use((req,res)=>{
+    res.status(404)
+    res.render('404',{
+        layout:undefined
+    })
+})
+
+/**
+ * Renders a page if a page is not responding.
+ * @name USE
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
+app.use((err,req,res,next)=>{
+    if(err.status===500){
+        res.render('500',{
+            layout:undefined
+        })
+    }
+})
+
+
+app.listen(8000)
