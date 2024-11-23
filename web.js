@@ -335,5 +335,30 @@ app.use((err,req,res,next)=>{
     }
 })
 
+app.post('/uploadProfile', async (req, res) => {
+    if (!req.files || !req.files.profilePicture) {
+        return res.status(400).send('No files were uploaded.');
+    }
+
+    let profilePicture = req.files.profilePicture;
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        return res.redirect('/?message=Please Log-in');
+    }
+
+    let username = session.data.username;
+
+
+    let uploadPath = __dirname + '/public/assets/img/' + username + '.jpg';
+
+    profilePicture.mv(uploadPath, function (err) {
+        if (err) {
+            console.log(err);
+            return res.status(500).send(err);
+        }
+
+        res.redirect('/index_user');
+    });
+});
 
 app.listen(8000)
