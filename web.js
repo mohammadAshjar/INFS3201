@@ -3,6 +3,7 @@ const business = require("./business")
 const bodyParser = require('body-parser')
 const handlebars = require('express-handlebars')
 const cookieParser = require('cookie-parser')
+const fileUpload = require("express-fileupload");
 
 app = express()
 app.set('views', __dirname+"/templates")
@@ -12,7 +13,8 @@ app.use(express.static('public'))
 let urlencodedParser = bodyParser.urlencoded({extended: false})
 app.use(urlencodedParser)
 app.use(cookieParser())
-
+app.use(fileUpload());
+app.use(express.static(__dirname + '/public'));
 
 /**
  * Validates an email address.
@@ -335,5 +337,30 @@ app.use((err,req,res,next)=>{
     }
 })
 
+app.post('/uploadProfile', async (req, res) => {
+    if (!req.files || !req.files.profilePicture) {
+        return res.status(400).send('No files were uploaded.');
+    }
+
+    let profilePicture = req.files.profilePicture;
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        return res.redirect('/?message=Please Log-in');
+    }
+
+    let username = session.data.username;
+
+
+    let uploadPath = __dirname + '/public/assets/img/' + username + '.jpg';
+
+    profilePicture.mv(uploadPath, function (err) {
+        if (err) {
+            console.log(err);
+            return res.status(500).send(err);
+        }
+
+        res.redirect('/index_user');
+    });
+});
 
 app.listen(8000)
