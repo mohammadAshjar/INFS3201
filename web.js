@@ -3,6 +3,7 @@ const business = require("./business")
 const bodyParser = require('body-parser')
 const handlebars = require('express-handlebars')
 const cookieParser = require('cookie-parser')
+const fileUpload = require("express-fileupload");
 
 app = express()
 app.set('views', __dirname+"/templates")
@@ -12,7 +13,8 @@ app.use(express.static('public'))
 let urlencodedParser = bodyParser.urlencoded({extended: false})
 app.use(urlencodedParser)
 app.use(cookieParser())
-
+app.use(fileUpload());
+app.use(express.static(__dirname + '/public'));
 
 /**
  * Validates an email address.
