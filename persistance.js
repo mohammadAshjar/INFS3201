@@ -176,8 +176,23 @@ async function deleteResetCode(resetCode) {
     await users.updateOne({ResetCode:resetCode},{$set:{ResetCode:''}})
 }
 
+async function getUserByVerifyCode(verifyCode){
+    await connectDatabase()
+    let users = db.collection("Users")
+    let result = await users.findOne({verifyCode:verifyCode})
+    return result
+}
+
+async function verifyUser(username) {
+    await connectDatabase()
+    let users = db.collection('Users')
+    await users.updateOne({username:username},{$set:{verified:"Yes"}})
+    
+}
+
 module.exports = {
     getUserDetails,
     startSession, updateSession, getSession, terminateSession, createNewAccount, getUserDetailByEmail,
-    updateUserDetails, findUserByReset, resetPassword, deleteResetCode, getAllUsers, getUserDetail
+    updateUserDetails, findUserByReset, resetPassword, deleteResetCode, getAllUsers, getUserDetail,
+    getUserByVerifyCode, verifyUser
 }

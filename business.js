@@ -1,5 +1,7 @@
+const { assert } = require('console')
 const persistence = require('./persistance')
 const crypto = require('crypto')
+const { builtinModules } = require('module')
 
 
 /**
@@ -70,12 +72,14 @@ async function getSession(key) {
  * @param {string} email - The user's email.
  * @param {string} password - The user's password.
  */
-async function createNewAccount(uname,email,password) {
+async function createNewAccount(uname,email,password,verifyCode) {
     let uData = {
         username: uname,
         password: hashPassword(password),
         email: email,
-        type: "Standard"
+        type: "Standard",
+        verified:"No",
+        verifyCode:verifyCode
     }
     await persistence.createNewAccount(uData)
     
@@ -155,11 +159,19 @@ async function getUserDetails(uname){
     return await persistence.getUserDetail(uname)
 }
 
+async function getUserByVerifyCode(verifyCode) {
+    return await persistence.getUserByVerifyCode(verifyCode)
+    
+}
+
+async function verifyUser(username){
+    await persistence.verifyUser(username)
+}
 
 
 module.exports = {
     attemptLogin, terminateSession, getSession, createNewAccount, 
     getUserDetailByEmail, updateUserDetails,
     findUserByReset, resetPassword, deleteResetCode, getAllUsers,
-    getUserDetails
+    getUserDetails, getUserByVerifyCode, verifyUser
 }

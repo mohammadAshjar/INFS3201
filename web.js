@@ -82,6 +82,10 @@ app.post('/', async (req, res) => {
         res.redirect("/?message=Invalid Credentials")
         return
     }
+    if(userDetail.verified!=='Yes'){
+        res.redirect('/?message=Please Verify Your Email')
+        return
+    }
     if (session) {
         
         res.cookie('session', session.key, {expires: session.expiry})
@@ -172,7 +176,19 @@ app.post('/new-account',async (req,res)=>{
         res.redirect("/register?message=Password don't match")
         return
     }
-    await business.createNewAccount(username,email,password)
+    let verifyUUID = crypto.randomUUID()
+    console.log( `
+        From: user-reset@gmail.com
+        To: ${email}
+        subject: Verify Email
+            Dear Sir/Ma'am
+                please verify your email using the following link
+                http://127.0.0.1:8000/verify/${verifyUUID}
+    
+            Thank you
+            Team
+        ` )
+    await business.createNewAccount(username,email,password,verifyUUID)
     res.redirect("/")
 })
 
@@ -191,6 +207,7 @@ app.get('/reset-password',async(req,res)=>{
         message:message
     })
 })
+
 
 
 /**
@@ -253,6 +270,16 @@ app.get('/password-reset/:resetCode',async (req,res)=>{
     )
 })
 
+app.get('/verify/:verifyCode',async(req,res)=>{
+    let userDetail = await business.getUserByVerifyCode(req.params.verifyCode)
+    if(!userDetail){
+        res.redirect("/?message=User Not Found")
+        return
+    }
+    await business.verifyUser(userDetail.username)
+    res.redirect('/?message=verified')
+})
+
 /**
  * Handles password reset form submission, validates, updates password, and deletes reset code.
  * @name POST /resetpwd
@@ -303,8 +330,43 @@ app.get('/logout',async(req,res)=>{
  */
 
 app.get('/my-account',async(req,res)=>{
-    res.render('myaccount')
+    let sd = await business.getSession(req.cookies.session)
+    if(!sd){
+        res.redirect('/?message=Please Log-in')
+        return
+    }
+    let username = sd.data.username
+    res.render('myaccount',{
+        username
+    })
 })
+
+app.post('/upload-profile', async (req, res) => {
+    console.log("ok")
+    let profilePicture = req.file.profilePicture;
+    if(!profilePicture){
+        res.redirect("/index")
+        return
+    }
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        return res.redirect('/?message=Please Log-in');
+    }
+
+    let username = session.data.username;
+
+
+    let uploadPath = __dirname + '/public/assets/img/' + username + '.jpg';
+
+    profilePicture.mv(uploadPath, function (err) {
+        if (err) {
+            console.log(err);
+            return res.status(500).send(err);
+        }
+
+        res.redirect('/index');
+    });
+});
 
 /**
  * Renders a page not found page.
@@ -337,30 +399,6 @@ app.use((err,req,res,next)=>{
     }
 })
 
-app.post('/uploadProfile', async (req, res) => {
-    if (!req.files || !req.files.profilePicture) {
-        return res.status(400).send('No files were uploaded.');
-    }
 
-    let profilePicture = req.files.profilePicture;
-    let session = await business.getSession(req.cookies.session);
-    if (!session) {
-        return res.redirect('/?message=Please Log-in');
-    }
-
-    let username = session.data.username;
-
-
-    let uploadPath = __dirname + '/public/assets/img/' + username + '.jpg';
-
-    profilePicture.mv(uploadPath, function (err) {
-        if (err) {
-            console.log(err);
-            return res.status(500).send(err);
-        }
-
-        res.redirect('/index_user');
-    });
-});
 
 app.listen(8000)
