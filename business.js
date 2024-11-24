@@ -169,9 +169,119 @@ async function verifyUser(username){
 }
 
 
+
+/* ---------------------------------new coded added -----------------------------------------*/
+
+async function addContact(username, contactUsername) {
+    let userDetail = await persistence.getUserDetail(username);
+    if (userDetail.blockedUsers && userDetail.blockedUsers.includes(contactUsername)) {
+        throw new Error("User is blocked");
+    }
+    return await persistence.addContact(username, contactUsername);
+}
+
+// Remove Contact
+async function removeContact(username, contactUsername) {
+    return await persistence.removeContact(username, contactUsername);
+}
+
+// Block User
+async function blockUser(username, blockUsername) {
+    return await persistence.blockUser(username, blockUsername);
+}
+
+// Unblock User
+async function unblockUser(username, blockUsername) {
+    return await persistence.unblockUser(username, blockUsername);
+}
+
+// Send Message
+async function sendMessage(sender, receiver, message) {
+    let receiverDetail = await persistence.getUserDetail(receiver);
+    
+    if (receiverDetail.blockedUsers && receiverDetail.blockedUsers.includes(sender)) {
+        throw new Error("User has blocked you");
+    }
+    
+    await persistence.sendMessage(sender, receiver, message);
+
+    // Add sender to receiver's contact list if not already added
+    if (!receiverDetail.contacts || !receiverDetail.contacts.includes(sender)) {
+        await persistence.addContact(receiver, sender);
+    }
+
+    // Evaluate badges for sender and receiver
+    console.log(`Evaluating badges for sender: ${sender} and receiver: ${receiver}`);
+    await evaluateBadges(sender);
+    await evaluateBadges(receiver);
+}
+
+
+
+// Get Messages Between Users
+async function getMessagesBetweenUsers(user1, user2) {
+    return await persistence.getMessagesBetweenUsers(user1, user2);
+}
+
+// Find Users by Fluent Language
+async function findUsersByFluentLanguage(language) {
+    return await persistence.findUsersByFluentLanguage(language);
+}
+
+async function getContact(username) {
+    return await persistence.getContact(username)
+    
+}
+
+
+async function evaluateBadges(username) {
+    let userDetails = await persistence.getUserDetail(username);
+
+    // Ensure badges field exists
+    if (!userDetails.badges) {
+        userDetails.badges = [];
+    }
+
+    // Badge: First Conversation
+    if (!userDetails.badges.includes("First Conversation")) {
+        let conversations = await persistence.getMessagesBetweenUsers(username, null);
+        let uniqueContacts = new Set(conversations.map(msg => msg.sender === username ? msg.receiver : msg.sender));
+        if (uniqueContacts.size > 0) {
+            console.log(`Awarding "First Conversation" badge to user: ${username}`);
+            userDetails.badges.push("First Conversation");
+        }
+    }
+
+    // Badge: 100 Messages Sent
+    if (!userDetails.badges.includes("100 Messages Sent")) {
+        let sentMessagesCount = await persistence.countMessagesSent(username);
+        if (sentMessagesCount >= 100) {
+            console.log(`Awarding "100 Messages Sent" badge to user: ${username}`);
+            userDetails.badges.push("100 Messages Sent");
+        }
+    }
+
+    // Update user details with new badges
+    await persistence.updateUserBadges(username, userDetails.badges);
+    console.log(`Updated badges for user: ${username} - ${userDetails.badges}`);
+}
+
+async function updateUserLanguages(username, fluentLanguages, learningLanguages) {
+    // Fetch user details to ensure the user exists
+    let userDetails = await persistence.getUserDetail(username);
+    if (!userDetails) {
+        throw new Error(`User ${username} not found`);
+    }
+
+    // Update fluent and learning languages in the persistence layer
+    await persistence.updateUserLanguages(username, fluentLanguages, learningLanguages);
+}
+
 module.exports = {
     attemptLogin, terminateSession, getSession, createNewAccount, 
     getUserDetailByEmail, updateUserDetails,
     findUserByReset, resetPassword, deleteResetCode, getAllUsers,
-    getUserDetails, getUserByVerifyCode, verifyUser
+    getUserDetails, getUserByVerifyCode, verifyUser,addContact, removeContact, blockUser, unblockUser,
+    sendMessage, getMessagesBetweenUsers, findUsersByFluentLanguage,
+    getContact, evaluateBadges,updateUserLanguages
 }
