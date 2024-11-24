@@ -1,0 +1,13 @@
+<h2>Users Fluent in {{language}}</h2>
+<ul>
+    {{#each users}}
+    <li>
+        {{this.username}}
+        <form action="/add-contact" method="POST" style="display:inline;">
+            <input type="hidden" name="contactUsername" value="{{this.username}}">
+            <button type="submit">Add Contact</button>
+        </form>
+    </li>
+    {{/each}}
+</ul>
+<a href="/index_user">Back to Contacts</a>
