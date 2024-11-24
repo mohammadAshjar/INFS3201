@@ -364,6 +364,14 @@ app.get('/my-account',async(req,res)=>{
     })
 })
 
+/**
+ * Handles profile picture upload for the logged-in user.
+ * @name POST /upload-profile
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
 app.post('/upload-profile', async (req, res) => {
     let profilePicture = req.files.submission;
     if(!profilePicture){
@@ -390,6 +398,14 @@ app.post('/upload-profile', async (req, res) => {
     });
 });
 
+/**
+ * Renders the blocked users page for the logged-in user.
+ * @name GET /blocked
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
 app.get('/blocked',async(req,res)=>{
     let sd = await business.getSession(req.cookies.session)
     if(!sd){
@@ -403,6 +419,13 @@ app.get('/blocked',async(req,res)=>{
     })
 })
 
+/**
+ * Handles the addition of fluent and learning languages to a user's profile.
+ * @name POST /add-languages
+ * @function
+ * @param {Object} req - The request object containing form data.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/add-languages', async (req, res) => {
     try {
@@ -421,6 +444,14 @@ app.post('/add-languages', async (req, res) => {
     }
 });
 
+/**
+ * Handles the addition of a new contact for the logged-in user.
+ * @name POST /add-contact
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+
 app.post('/add-contact', async (req, res) => {
     let session = await business.getSession(req.cookies.session);
     if (!session) {
@@ -437,6 +468,13 @@ app.post('/add-contact', async (req, res) => {
     }
 });
 
+/**
+ * Handles removing a contact from the user's contact list.
+ * @name POST /remove-contact
+ * @function
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/remove-contact', async (req, res) => {
     let session = await business.getSession(req.cookies.session);
@@ -450,7 +488,13 @@ app.post('/remove-contact', async (req, res) => {
     res.redirect('/index');
 });
 
-
+/**
+ * Handles blocking a user.
+ * @name POST /block-user
+ * @function
+ * @param {Object} req - The request object containing the username to block.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/block-user', async (req, res) => {
     let session = await business.getSession(req.cookies.session);
@@ -458,12 +502,22 @@ app.post('/block-user', async (req, res) => {
         res.redirect('/?message=Please Log-in');
         return;
     }
+    if(!session.token){
+        res.redirect('/index?message=Not Authorized')
+    }
     let username = session.data.username;
     let blockUsername = req.body.blockUsername;
     await business.blockUser(username, blockUsername);
     res.redirect('/index');
 });
 
+/**
+ * Handles unblocking a user.
+ * @name POST /unblock-user
+ * @function
+ * @param {Object} req - The request object containing the username to unblock.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/unblock-user', async (req, res) => {
     let session = await business.getSession(req.cookies.session);
@@ -477,6 +531,13 @@ app.post('/unblock-user', async (req, res) => {
     res.redirect('/index');
 });
 
+/**
+ * Handles sending a message from one user to another.
+ * @name POST /send-message
+ * @function
+ * @param {Object} req - The request object containing the message details.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/send-message', async (req, res) => {
     let session = await business.getSession(req.cookies.session);
@@ -527,6 +588,13 @@ app.get('/search-fluent-users', async (req, res) => {
     res.render('search_fluent_users');
 });
 
+/**
+ * Handles finding users fluent in a specific language.
+ * @name POST /find-fluent-users
+ * @function
+ * @param {Object} req - The request object containing the language.
+ * @param {Object} res - The response object.
+ */
 
 app.post('/find-fluent-users', async (req, res) => {
     let session = await business.getSession(req.cookies.session);

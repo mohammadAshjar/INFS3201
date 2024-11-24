@@ -25,6 +25,7 @@ function hashPassword(pwd){
  */
 async function attemptLogin(u, p) {
     let details = await persistence.getUserDetails(u)
+    let csrfToken = crypto.randomUUID
     let hashedPassword = hashPassword(p)
     if (details == undefined || details.password != hashedPassword) {
         return undefined
@@ -37,7 +38,8 @@ async function attemptLogin(u, p) {
         data: {
             username: details.username,
             type: details.type
-        }
+        },
+        token:csrfToken
     }
     await persistence.startSession(sd)
     return sd
