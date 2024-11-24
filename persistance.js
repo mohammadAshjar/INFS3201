@@ -107,9 +107,10 @@ async function terminateSession(key) {
  * @param {Object} data - User data.
  */
 async function createNewAccount(data){
-    await connectDatabase()
-    let user = db.collection("Users")
-    await user.insertOne(data)
+    await connectDatabase();
+    let user = db.collection("Users");
+    data.badges=[];
+    await user.insertOne(data);
 }
 
 
@@ -190,9 +191,152 @@ async function verifyUser(username) {
     
 }
 
+
+
+
+/* ---------------------------------new coded added from here -----------------------------------------*/
+
+
+// Add Contact
+async function addContact(username, contactUsername) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    let result = await users.updateOne(
+        { username: username },
+        { $addToSet: { contacts: contactUsername } }
+    );
+    return result;
+}
+
+// Remove Contact
+async function removeContact(username, contactUsername) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    let result = await users.updateOne(
+        { username: username },
+        { $pull: { contacts: contactUsername } }
+    );
+    return result;
+}
+
+// Block User
+async function blockUser(username, blockUsername) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    let result = await users.updateOne(
+        { username: username },
+        { $addToSet: { blockedUsers: blockUsername } }
+    );
+    return result;
+}
+
+// Unblock User
+async function unblockUser(username, blockUsername) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    let result = await users.updateOne(
+        { username: username },
+        { $pull: { blockedUsers: blockUsername } }
+    );
+    return result;
+}
+
+// Send Message
+async function sendMessage(sender, receiver, message) {
+    await connectDatabase();
+    let messages = db.collection('Messages');
+    await messages.insertOne({
+        sender: sender,
+        receiver: receiver,
+        message: message,
+        timestamp: new Date(),
+        read: false // Mark as unread initially
+    });
+}
+
+
+// Get Messages Between Users
+async function getMessagesBetweenUsers(user1, user2) {
+    await connectDatabase();
+    let messages = db.collection('Messages');
+    let result = await messages.find({
+        $or: [
+            { sender: user1, receiver: user2 },
+            { sender: user2, receiver: user1 }
+        ]
+    }).sort({ timestamp: 1 }).toArray();
+    return result;
+}
+
+// Find Users by Fluent Language
+async function findUsersByFluentLanguage(language) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    let result = await users.find({ fluentLanguages: language }).toArray();
+    return result;
+}
+
+async function getContact(username) {
+    await connectDatabase();
+    let users = db.collection('Users')
+    let result = await users.findOne({username:username})
+    return result
+    
+}
+
+// Update user badges
+async function updateUserBadges(username, badges) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    const result = await users.updateOne(
+        { username: username },
+        { $set: { badges: badges } }
+    );
+
+    if (result.matchedCount === 0) {
+        console.error(`Failed to update badges for user: ${username} - User not found.`);
+    } else {
+        console.log(`Successfully updated badges for user: ${username}`);
+    }
+}
+
+
+// Count messages sent by a user
+async function countMessagesSent(username) {
+    await connectDatabase();
+    let messages = db.collection('Messages');
+    let count = await messages.countDocuments({ sender: username });
+    return count;
+}
+
+async function updateUserLanguages(username, fluentLanguages, learningLanguages) {
+    await connectDatabase();
+    let users = db.collection('Users');
+    
+    console.log(`Updating languages for user: ${username}`);
+    const result = await users.updateOne(
+        { username: username },
+        {
+            $set: {
+                fluentLanguages: fluentLanguages,
+                learningLanguages: learningLanguages
+            }
+        }
+    );
+
+    if (result.matchedCount === 0) {
+        console.error(`Failed to update languages for user: ${username} - User not found.`);
+    } else if (result.modifiedCount > 0) {
+        console.log(`Successfully updated languages for user: ${username}`);
+    } else {
+        console.warn(`Languages for user: ${username} were not modified. Possible no change detected.`);
+    }
+}
+
 module.exports = {
     getUserDetails,
     startSession, updateSession, getSession, terminateSession, createNewAccount, getUserDetailByEmail,
     updateUserDetails, findUserByReset, resetPassword, deleteResetCode, getAllUsers, getUserDetail,
-    getUserByVerifyCode, verifyUser
+    getUserByVerifyCode, verifyUser,addContact,removeContact, blockUser, unblockUser,sendMessage, getMessagesBetweenUsers, findUsersByFluentLanguage,
+    getContact,updateUserBadges,countMessagesSent,updateUserLanguages
 }
