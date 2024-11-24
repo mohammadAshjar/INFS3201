@@ -191,11 +191,11 @@ async function verifyUser(username) {
     
 }
 
-
-
-
-/* ---------------------------------new coded added from here -----------------------------------------*/
-
+async function getMessages(username) {
+    await connectDatabase()
+    let message = db.collection('Messages')
+    return await message.find({sender:username}).toArray()
+}
 
 // Add Contact
 async function addContact(username, contactUsername) {
@@ -338,5 +338,6 @@ module.exports = {
     startSession, updateSession, getSession, terminateSession, createNewAccount, getUserDetailByEmail,
     updateUserDetails, findUserByReset, resetPassword, deleteResetCode, getAllUsers, getUserDetail,
     getUserByVerifyCode, verifyUser,addContact,removeContact, blockUser, unblockUser,sendMessage, getMessagesBetweenUsers, findUsersByFluentLanguage,
-    getContact,updateUserBadges,countMessagesSent,updateUserLanguages
+    getContact,updateUserBadges,countMessagesSent,updateUserLanguages,
+    getMessages
 }

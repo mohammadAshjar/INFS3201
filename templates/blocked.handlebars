@@ -1,0 +1,13 @@
+<h2>Blocked Users</h2>
+    <ul>
+        {{#each blockedUsers}}
+        <li>
+            {{this}}
+            <!-- Form to unblock the user -->
+            <form action="/unblock-user" method="POST" style="display:inline;">
+                <input type="hidden" name="blockUsername" value="{{this}}">
+                <button type="submit">Unblock</button>
+            </form>
+        </li>
+        {{/each}}
+</ul>

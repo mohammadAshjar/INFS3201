@@ -168,9 +168,10 @@ async function verifyUser(username){
     await persistence.verifyUser(username)
 }
 
-
-
-/* ---------------------------------new coded added -----------------------------------------*/
+async function getMessages(username) {
+    return await persistence.getMessages(username)
+    
+}
 
 async function addContact(username, contactUsername) {
     let userDetail = await persistence.getUserDetail(username);
@@ -283,5 +284,6 @@ module.exports = {
     findUserByReset, resetPassword, deleteResetCode, getAllUsers,
     getUserDetails, getUserByVerifyCode, verifyUser,addContact, removeContact, blockUser, unblockUser,
     sendMessage, getMessagesBetweenUsers, findUsersByFluentLanguage,
-    getContact, evaluateBadges,updateUserLanguages
+    getContact, evaluateBadges,updateUserLanguages,
+    getMessages
 }

@@ -1,0 +1,18 @@
+<h2>Chat with {{contact}}</h2>
+
+
+    {{#each messages}}
+    <div class="message">
+        <strong>{{sender}}:</strong> {{message}}
+    </div>
+    {{/each}}
+
+
+<!-- Form to send a new message -->
+<form action="/send-message" method="POST">
+    <input type="hidden" name="receiver" value="{{contact}}">
+    <textarea name="message" placeholder="Type your message..." required></textarea>
+    <button type="submit">Send</button>
+</form>
+
+<a href="/contacts">Back to Contacts</a>

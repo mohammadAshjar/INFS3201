@@ -51,11 +51,13 @@
               <p class="text-medium-emphasis">The page you are looking for was not found.</p>
             </div>
             <div class="input-group"><span class="input-group-text">
+               <form method="post" action="/find-page"></form>
                 <svg class="icon">
                   <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-magnifying-glass"></use>
                 </svg></span>
               <input class="form-control" id="prependedInput" size="16" type="text" placeholder="What are you looking for?">
-              <button class="btn btn-info" type="button">Search</button>
+              <input class="btn btn-info" type="submit" value="Search">
+              </form>
             </div>
           </div>
         </div>

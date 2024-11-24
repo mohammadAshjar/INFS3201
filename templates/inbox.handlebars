@@ -1,0 +1,20 @@
+<h2>Your Contacts</h2>
+    <ul>
+        {{#each contacts}}
+        <li>
+            {{this}} - 
+            <!-- Link to initiate a chat -->
+            <a href="/chat/{{this}}">Chat</a> 
+            <!-- Form to remove the contact -->
+            <form action="/remove-contact" method="POST" style="display:inline;">
+                <input type="hidden" name="contactUsername" value="{{this}}">
+                <button type="submit">Remove</button>
+            </form>
+            <!-- Form to block the contact -->
+            <form action="/block-user" method="POST" style="display:inline;">
+                <input type="hidden" name="blockUsername" value="{{this}}">
+                <button type="submit">Block</button>
+            </form>
+        </li>
+        {{/each}}
+    </ul>

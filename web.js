@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const handlebars = require('express-handlebars')
 const cookieParser = require('cookie-parser')
 const fileUpload = require("express-fileupload");
+const { blockUser } = require('./persistance')
 
 app = express()
 app.set('views', __dirname+"/templates")
@@ -115,15 +116,12 @@ app.get('/index', async (req, res) => {
     let username = session.data.username;
     let userDetails = await business.getUserDetails(username);
     let contacts = userDetails.contacts || [];
-    let badges = userDetails.badges || [];
-
     if (session.data.type === "Admin") {
         res.render('index_admin');
     } else {
         res.render('index_user', {
             username,
-            contacts,
-            badges
+            contacts
         });
     }
 });
@@ -344,14 +342,30 @@ app.get('/my-account',async(req,res)=>{
         return
     }
     let username = sd.data.username
+    let userDetail = await business.getUserDetails(username)
+    let first = false
+    if(await business.getMessages(username)){
+        first = true
+    }
+    let message = await business.getMessages(username)
+    let count = 0
+    for(let m of message){
+        count++
+    }
+    let badge100 = false
+    if(count>=100){
+        badge100 = true
+    }
+    let badges = userDetail.badges
     res.render('myaccount',{
-        username
+        username,
+        first,
+        badge100
     })
 })
 
 app.post('/upload-profile', async (req, res) => {
-    console.log("ok")
-    let profilePicture = req.file.profilePicture;
+    let profilePicture = req.files.submission;
     if(!profilePicture){
         res.redirect("/index")
         return
@@ -366,7 +380,7 @@ app.post('/upload-profile', async (req, res) => {
 
     let uploadPath = __dirname + '/public/assets/img/' + username + '.jpg';
 
-    profilePicture.mv(uploadPath, function (err) {
+    await profilePicture.mv(uploadPath, function (err) {
         if (err) {
             console.log(err);
             return res.status(500).send(err);
@@ -376,7 +390,18 @@ app.post('/upload-profile', async (req, res) => {
     });
 });
 
-/* ---------------------------------new coded added from here-----------------------------------------*/
+app.get('/blocked',async(req,res)=>{
+    let sd = await business.getSession(req.cookies.session)
+    if(!sd){
+        res.redirect('/?message=Please Log-in')
+        return
+    }
+    let userDetail = await business.getUserDetails(sd.data.username)
+    let blocked = userDetail.blockedUsers
+    res.render('blocked',{
+        blockedUsers:blocked
+    })
+})
 
 
 app.post('/add-languages', async (req, res) => {
@@ -389,7 +414,7 @@ app.post('/add-languages', async (req, res) => {
         // Update the user's languages in the database
         await business.updateUserLanguages(username, fluentLanguages, learningLanguages);
 
-        res.redirect('/index_admin?message=Languages successfully added');
+        res.redirect('/index?message=Languages successfully added');
     } catch (error) {
         console.error("Error adding languages:", error);
         res.redirect('/index_admin?message=Error adding languages');
@@ -485,7 +510,7 @@ app.get('/chat/:username', async (req, res) => {
 
     // Render the chat page using the `chat.handlebars` template
     res.render('chat', {
-        layout: undefined,
+        layout:undefined,
         currentUser: currentUser,
         contact: contact,
         messages: messages
@@ -519,12 +544,55 @@ app.post('/find-fluent-users', async (req, res) => {
     );
 
     res.render('fluent_users_list', {
-        layout: undefined,
         language: language,
         users: users,
         currentUser: currentUser
     });
 });
+
+
+
+app.get('/unread-messages', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let currentUser = session.data.username;
+
+    // Fetch unread messages for the current user
+    let unreadMessages = await business.getUnreadMessages(currentUser);
+
+    res.render('unread_messages', {
+        unreadMessages: unreadMessages
+    });
+});
+
+app.get('/contacts',async(req,res)=>{
+    let sd = await business.getSession(req.cookies.session)
+    if(!sd){
+        res.redirect('/?message=Please Log-in')
+        return
+    }
+    let contacts = await business.getContact(sd.data.username)
+    res.render('inbox',{
+        contacts:contacts.contacts
+    })
+})
+
+app.get('/settings',async(req,res)=>{
+    let sd = await business.getSession(req.cookies.session)
+    if(!sd){
+        res.redirect('/?message=Please Log-in')
+        return
+    }
+    let userDetail = await business.getUserDetails(sd.data.username)
+    let blocked = userDetail.blockedUsers
+    res.render('settings',{
+        blockedUsers:blocked
+        }
+    )
+})
 
 /**
  * Renders a page not found page.
@@ -540,24 +608,6 @@ app.use((req,res)=>{
         layout:undefined
     })
 })
-
-
-app.get('/unread-messages', async (req, res) => {
-    let session = await business.getSession(req.cookies.session);
-    if (!session) {
-        res.redirect('/?message=Please Log-in');
-        return;
-    }
-    let currentUser = session.data.username;
-
-    // Fetch unread messages for the current user
-    let unreadMessages = await business.getUnreadMessages(currentUser);
-
-    res.render('unread_messages', {
-        layout: undefined,
-        unreadMessages: unreadMessages
-    });
-});
 
 /**
  * Renders a page if a page is not responding.

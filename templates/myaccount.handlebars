@@ -1,7 +1,16 @@
 Username: {{username}}
 
 
-<form  method="post" action="/upload-profile" >
-    <input type="file" name="profilePicture">
+<form  method="post" action="/upload-profile" enctype="multipart/form-data">
+    <input type="file" name="submission">
     <input type="submit" value="upload">
 </form>
+<h3>Your Badges:</h3>
+    <ul>
+        {{#if first}}
+          <li><img src="assets/img/first.jpg" width="50" height="50"></li>
+        {{/if}}
+        {{#if badge100}}
+          <li><img src="assets/img/100.jpg" width="50" height="50"></li>
+        {{/if}}
+    </ul>

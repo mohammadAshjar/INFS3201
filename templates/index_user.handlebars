@@ -112,7 +112,7 @@
     <h2>Add Languages for a User</h2>
       <form action="/add-languages" method="POST">
           <label for="username">Username:</label>
-          <input type="text" name="username" placeholder="Enter username" required><br>
+          <input type="text" name="username" value={{username}} readonly><br>
 
           <label for="fluentLanguages">Fluent Languages (comma-separated):</label>
           <input type="text" name="fluentLanguages" placeholder="e.g., English, Spanish"><br>
@@ -124,52 +124,9 @@
       </form>
 
 
-    <h2>Your Contacts</h2>
-    <ul>
-        {{#each contacts}}
-        <li>
-            {{this}} - 
-            <!-- Link to initiate a chat -->
-            <a href="/chat/{{this}}">Chat</a> 
-            <!-- Form to remove the contact -->
-            <form action="/remove-contact" method="POST" style="display:inline;">
-                <input type="hidden" name="contactUsername" value="{{this}}">
-                <button type="submit">Remove</button>
-            </form>
-            <!-- Form to block the contact -->
-            <form action="/block-user" method="POST" style="display:inline;">
-                <input type="hidden" name="blockUsername" value="{{this}}">
-                <button type="submit">Block</button>
-            </form>
-        </li>
-        {{/each}}
-    </ul>
-
+   
     <!-- Link to search for users fluent in specific languages -->
     <h2>Search Users Fluent in a Language</h2>
     <a href="/search-fluent-users">Find Users</a>
-
-    <!-- Section to unblock a user -->
-    <h2>Blocked Users</h2>
-    <ul>
-        {{#each blockedUsers}}
-        <li>
-            {{this}}
-            <!-- Form to unblock the user -->
-            <form action="/unblock-user" method="POST" style="display:inline;">
-                <input type="hidden" name="blockUsername" value="{{this}}">
-                <button type="submit">Unblock</button>
-            </form>
-        </li>
-        {{/each}}
-    </ul>
-
-    <h3>Your Badges:</h3>
-      <ul>
-          {{#each badges}}
-          <li>{{this}}</li>
-          {{/each}}
-      </ul>
-
     </body>
 </html>
