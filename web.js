@@ -105,20 +105,28 @@ app.post('/', async (req, res) => {
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  */
-app.get('/index',async(req,res)=>{
-    let sd = await business.getSession(req.cookies.session)
-    if(!sd){
-        res.redirect('/?message=Please Log-in')
-        return
+app.get('/index', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
     }
-    let username = sd.data.username
-    if(sd.data.type==="Admin"){
-        res.render('index_admin')
+
+    let username = session.data.username;
+    let userDetails = await business.getUserDetails(username);
+    let contacts = userDetails.contacts || [];
+    let badges = userDetails.badges || [];
+
+    if (session.data.type === "Admin") {
+        res.render('index_admin');
+    } else {
+        res.render('index_user', {
+            username,
+            contacts,
+            badges
+        });
     }
-    else{
-        res.render('index_user',{username})
-    }
-})
+});
 
 
 /**
@@ -368,6 +376,156 @@ app.post('/upload-profile', async (req, res) => {
     });
 });
 
+/* ---------------------------------new coded added from here for you ashjar-----------------------------------------*/
+
+
+app.post('/add-languages', async (req, res) => {
+    try {
+        // Extract form data
+        let username = req.body.username;
+        let fluentLanguages = req.body.fluentLanguages ? req.body.fluentLanguages.split(',').map(lang => lang.trim()) : [];
+        let learningLanguages = req.body.learningLanguages ? req.body.learningLanguages.split(',').map(lang => lang.trim()) : [];
+
+        // Update the user's languages in the database
+        await business.updateUserLanguages(username, fluentLanguages, learningLanguages);
+
+        res.redirect('/index_admin?message=Languages successfully added');
+    } catch (error) {
+        console.error("Error adding languages:", error);
+        res.redirect('/index_admin?message=Error adding languages');
+    }
+});
+
+app.post('/add-contact', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let username = session.data.username;
+    let contactUsername = req.body.contactUsername;
+    try {
+        await business.addContact(username, contactUsername);
+        res.redirect('/index');
+    } catch (error) {
+        res.redirect(`/index?message=${error.message}`);
+    }
+});
+
+
+app.post('/remove-contact', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let username = session.data.username;
+    let contactUsername = req.body.contactUsername;
+    await business.removeContact(username, contactUsername);
+    res.redirect('/index');
+});
+
+
+
+app.post('/block-user', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let username = session.data.username;
+    let blockUsername = req.body.blockUsername;
+    await business.blockUser(username, blockUsername);
+    res.redirect('/index');
+});
+
+
+app.post('/unblock-user', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let username = session.data.username;
+    let blockUsername = req.body.blockUsername;
+    await business.unblockUser(username, blockUsername);
+    res.redirect('/index');
+});
+
+
+app.post('/send-message', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let sender = session.data.username;
+    let receiver = req.body.receiver;
+    let message = req.body.message;
+    try {
+        await business.sendMessage(sender, receiver, message);
+        res.redirect(`/chat/${receiver}`);
+    } catch (error) {
+        res.redirect(`/chat/${receiver}?message=${error.message}`);
+    }
+});
+
+
+app.get('/chat/:username', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let currentUser = session.data.username;
+    let contact = req.params.username;
+
+    // Get the messages exchanged between the logged-in user and the contact
+    let messages = await business.getMessagesBetweenUsers(currentUser, contact);
+
+    // Render the chat page using the `chat.handlebars` template
+    res.render('chat', {
+        layout: undefined,
+        currentUser: currentUser,
+        contact: contact,
+        messages: messages
+    });
+});
+
+
+app.get('/search-fluent-users', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    res.render('search_fluent_users');
+});
+
+
+app.post('/find-fluent-users', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let language = req.body.language;
+    let users = await business.findUsersByFluentLanguage(language);
+
+    let currentUser = session.data.username;
+    users = users.filter(user => 
+        user.username !== currentUser && 
+        (!user.blockedUsers || !user.blockedUsers.includes(currentUser))
+    );
+
+    res.render('fluent_users_list', {
+        layout: undefined,
+        language: language,
+        users: users,
+        currentUser: currentUser
+    });
+});
+
 /**
  * Renders a page not found page.
  * @name USE
@@ -382,6 +540,24 @@ app.use((req,res)=>{
         layout:undefined
     })
 })
+
+
+app.get('/unread-messages', async (req, res) => {
+    let session = await business.getSession(req.cookies.session);
+    if (!session) {
+        res.redirect('/?message=Please Log-in');
+        return;
+    }
+    let currentUser = session.data.username;
+
+    // Fetch unread messages for the current user
+    let unreadMessages = await business.getUnreadMessages(currentUser);
+
+    res.render('unread_messages', {
+        layout: undefined,
+        unreadMessages: unreadMessages
+    });
+});
 
 /**
  * Renders a page if a page is not responding.
