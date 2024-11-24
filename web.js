@@ -376,7 +376,7 @@ app.post('/upload-profile', async (req, res) => {
     });
 });
 
-/* ---------------------------------new coded added from here for you ashjar-----------------------------------------*/
+/* ---------------------------------new coded added from here-----------------------------------------*/
 
 
 app.post('/add-languages', async (req, res) => {
